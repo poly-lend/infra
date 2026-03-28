@@ -1,0 +1,43 @@
+api.polylend.com {
+    encode gzip
+
+    @cors_preflight method OPTIONS
+    handle @cors_preflight {
+        header {
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        }
+        respond "" 204
+    }
+
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    }
+
+    reverse_proxy api:3001
+}
+
+app.polylend.com {
+    reverse_proxy web:3000
+}
+
+polylend.com {
+    reverse_proxy landing:3001
+}
+
+www.polylend.com {
+    redir https://polylend.com
+}
+
+www.polylend.cc {
+    redir https://polylend.com
+}
+
+polylend.cc {
+    redir https://polylend.com
+}
+
+docs.polylend.cc {
+    redir https://docs.polylend.com
+}

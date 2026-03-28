@@ -1,0 +1,76 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: polylend-mongo
+    volumes:
+      - ./data/mongo:/data/db
+    restart: unless-stopped
+
+  api:
+    image: polylend-api
+    container_name: polylend-api
+    depends_on:
+      - mongo
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - MONGO_URL=mongodb://mongo:27017
+    command: ['node', 'build/api.js']
+    restart: unless-stopped
+
+  listener:
+    image: polylend-listener
+    container_name: polylend-listener
+    depends_on:
+      - mongo
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - MONGO_URL=mongodb://mongo:27017
+      - RPC_URL=${RPC_URL}
+      - WS_URL=${WS_URL}
+    command: ['node', 'build/listener.js']
+    restart: unless-stopped
+
+  web:
+    image: polylend-web
+    container_name: polylend-web
+    build:
+      context: ../frontend/web
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    command: ['npm', 'start']
+    restart: unless-stopped
+
+  landing:
+    image: polylend-landing
+    container_name: polylend-landing
+    build:
+      context: ../frontend/landing
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    command: ['npm', 'start']
+    restart: unless-stopped
+
+  caddy:
+    image: caddy
+    container_name: polylend-caddy
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
