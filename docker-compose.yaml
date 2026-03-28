@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:7.0
+    image: mongo:8
     container_name: polylend-mongo
     volumes:
       - ./data/mongo:/data/db
@@ -44,7 +44,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-    command: ['npm', 'start']
+    command: ['npm', 'run', 'preview']
     restart: unless-stopped
 
   landing:
@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-    command: ['npm', 'start']
+    command: ['npm', 'run', 'preview']
     restart: unless-stopped
 
   caddy:
