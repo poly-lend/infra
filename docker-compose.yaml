@@ -44,7 +44,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-    command: ['npm', 'run', 'preview']
+    command: ['npm', 'start']
     restart: unless-stopped
 
   landing:
@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-    command: ['npm', 'run', 'preview']
+    command: ['npm', 'start']
     restart: unless-stopped
 
   caddy:
