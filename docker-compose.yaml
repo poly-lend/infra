@@ -42,9 +42,6 @@ services:
     build:
       context: ../frontend/web
       dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    command: ['npm', 'start']
     restart: unless-stopped
 
   landing-build:
