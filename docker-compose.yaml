@@ -47,20 +47,19 @@ services:
     command: ['npm', 'start']
     restart: unless-stopped
 
-  landing:
-    image: polylend-landing
-    container_name: polylend-landing
+  landing-build:
+    image: polylend-landing-build
     build:
       context: ../frontend/landing
       dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    command: ['npm', 'start']
-    restart: unless-stopped
+    volumes:
+      - landing_dist:/landing
 
   caddy:
     image: caddy
     container_name: polylend-caddy
+    depends_on:
+      - landing-build
     ports:
       - '80:80'
       - '443:443'
@@ -69,8 +68,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+      - landing_dist:/srv/landing:ro
     restart: unless-stopped
 
 volumes:
   caddy_data:
   caddy_config:
+  landing_dist:

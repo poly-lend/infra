@@ -23,7 +23,10 @@ app.polylend.com {
 }
 
 polylend.com {
-    reverse_proxy landing:3001
+    encode gzip
+    root * /srv/landing
+    try_files {path} /index.html
+    file_server
 }
 
 www.polylend.com {
