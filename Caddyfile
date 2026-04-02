@@ -19,7 +19,10 @@ api.polylend.com {
 }
 
 app.polylend.com {
-    reverse_proxy web:3000
+    encode gzip
+    root * /srv/web
+    try_files {path} /index.html
+    file_server
 }
 
 polylend.com {
