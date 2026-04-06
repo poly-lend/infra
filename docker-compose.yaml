@@ -39,7 +39,7 @@ services:
   web-build:
     image: polylend-web-build
     build:
-      context: ../frontend/web
+      context: ../webapp
       dockerfile: Dockerfile
     volumes:
       - web_dist:/web
@@ -47,7 +47,7 @@ services:
   landing-build:
     image: polylend-landing-build
     build:
-      context: ../frontend/landing
+      context: ../landing
       dockerfile: Dockerfile
     volumes:
       - landing_dist:/landing
