@@ -41,6 +41,9 @@ services:
     build:
       context: ../webapp
       dockerfile: Dockerfile
+      args:
+        - VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=${VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
+        - VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST}
     volumes:
       - web_dist:/web
 
@@ -49,6 +52,9 @@ services:
     build:
       context: ../landing
       dockerfile: Dockerfile
+      args:
+        - VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=${VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
+        - VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST}
     volumes:
       - landing_dist:/landing
 
