@@ -4,13 +4,42 @@ services:
     container_name: polylend-mongo
     volumes:
       - ./data/mongo:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1}).ok' | grep -q 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  mongo-backup:
+    image: mongo:8
+    container_name: polylend-mongo-backup
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./data/backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          STAMP=$$(date +%Y-%m-%d_%H%M)
+          echo "Starting backup $$STAMP"
+          mongodump --host mongo --archive=/backups/$$STAMP.gz --gzip \
+            && echo "Backup complete: $$STAMP" \
+            || echo "Backup failed: $$STAMP"
+          find /backups -name '*.gz' -mtime +14 -delete
+          sleep 86400
+        done
     restart: unless-stopped
 
   api:
     image: polylend-api
     container_name: polylend-api
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -18,13 +47,20 @@ services:
       - NODE_ENV=production
       - MONGO_URL=mongodb://mongo:27017
     command: ['node', 'build/api.js']
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
 
   listener:
     image: polylend-listener
     container_name: polylend-listener
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -34,6 +70,12 @@ services:
       - RPC_URL=${RPC_URL}
       - WS_URL=${WS_URL}
     command: ['node', 'build/listener.js']
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
 
   web-build:
@@ -62,8 +104,10 @@ services:
     image: caddy
     container_name: polylend-caddy
     depends_on:
-      - web-build
-      - landing-build
+      web-build:
+        condition: service_completed_successfully
+      landing-build:
+        condition: service_completed_successfully
     ports:
       - '80:80'
       - '443:443'
