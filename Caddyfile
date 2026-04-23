@@ -1,49 +1,99 @@
 api.polylend.com {
-    encode gzip
+	encode gzip
 
-    @cors_preflight method OPTIONS
-    handle @cors_preflight {
-        header {
-            Access-Control-Allow-Origin "*"
-            Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-        }
-        respond "" 204
-    }
+	@cors_preflight method OPTIONS
+	handle @cors_preflight {
+		header {
+			Access-Control-Allow-Origin "*"
+			Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		}
+		respond "" 204
+	}
 
-    header {
-        Access-Control-Allow-Origin "*"
-        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    }
+	header {
+		Access-Control-Allow-Origin "*"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+	}
 
-    reverse_proxy api:3001
+	reverse_proxy api:3001
 }
 
 app.polylend.com {
-    encode gzip
-    root * /srv/web
-    try_files {path} /index.html
-    file_server
+	encode gzip
+	root * /srv/web
+	try_files {path} /index.html
+	file_server
 }
 
 polylend.com {
-    encode gzip
-    root * /srv/landing
-    try_files {path} /index.html
-    file_server
+	encode gzip
+	root * /srv/landing
+	try_files {path} /index.html
+	file_server
 }
 
 www.polylend.com {
-    redir https://polylend.com
+	redir https://polylend.com
+}
+
+api-testnet.polylend.com {
+	encode gzip
+
+	@cors_preflight method OPTIONS
+	handle @cors_preflight {
+		header {
+			Access-Control-Allow-Origin "https://testnet.polylend.com"
+			Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+			Access-Control-Allow-Headers "Content-Type"
+		}
+		respond "" 204
+	}
+
+	header {
+		Access-Control-Allow-Origin "https://testnet.polylend.com"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+	}
+
+	reverse_proxy api-testnet:3001
+}
+
+rpc-testnet.polylend.com {
+	encode gzip
+
+	# MetaMask and other wallets need a permissive origin to accept the RPC
+	@cors_preflight method OPTIONS
+	handle @cors_preflight {
+		header {
+			Access-Control-Allow-Origin "*"
+			Access-Control-Allow-Methods "GET, POST, OPTIONS"
+			Access-Control-Allow-Headers "Content-Type"
+		}
+		respond "" 204
+	}
+
+	header {
+		Access-Control-Allow-Origin "*"
+	}
+
+	# reverse_proxy forwards Upgrade headers, so ws:// clients work too
+	reverse_proxy anvil:8545
+}
+
+testnet.polylend.com {
+	encode gzip
+	root * /srv/web-testnet
+	try_files {path} /index.html
+	file_server
 }
 
 www.polylend.cc {
-    redir https://polylend.com
+	redir https://polylend.com
 }
 
 polylend.cc {
-    redir https://polylend.com
+	redir https://polylend.com
 }
 
 docs.polylend.cc {
-    redir https://docs.polylend.com
+	redir https://docs.polylend.com
 }
