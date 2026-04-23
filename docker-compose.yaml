@@ -190,6 +190,7 @@ services:
       - caddy_config:/config
       - web_dist:/srv/web:ro
       - landing_dist:/srv/landing:ro
+      - web_testnet_dist:/srv/web-testnet:ro
     restart: unless-stopped
 
 volumes:
@@ -197,3 +198,4 @@ volumes:
   caddy_config:
   web_dist:
   landing_dist:
+  web_testnet_dist:
