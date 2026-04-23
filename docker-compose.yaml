@@ -213,6 +213,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_NETWORK=testnet
+        - VITE_TESTNET_POLYLEND_ADDRESS=${TESTNET_POLYLEND_ADDRESS:-}
         - VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=${VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
         - VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST}
     volumes:
