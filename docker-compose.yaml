@@ -76,6 +76,31 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  api-testnet:
+    image: polylend-api
+    container_name: polylend-api-testnet
+    depends_on:
+      mongo:
+        condition: service_healthy
+      anvil:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - NETWORK=testnet
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB=polylend-testnet
+      - RPC_URL=http://anvil:8545
+      - WS_URL=ws://anvil:8545
+      - POLYLEND_ADDRESS=${TESTNET_POLYLEND_ADDRESS}
+    command: ['node', 'build/api.js']
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
   listener:
     image: polylend-listener
     container_name: polylend-listener
