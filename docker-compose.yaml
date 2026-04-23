@@ -34,6 +34,35 @@ services:
         done
     restart: unless-stopped
 
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: polylend-anvil
+    entrypoint: anvil
+    command:
+      - --fork-url
+      - ${RPC_URL}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8545"
+      - --chain-id
+      - "31337"
+      - --block-time
+      - "2"
+      - --state
+      - /data/anvil-state.json
+      - --state-interval
+      - "600"
+    volumes:
+      - ./data/anvil:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cast chain-id --rpc-url http://localhost:8545 | grep -q 31337"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
   api:
     image: polylend-api
     container_name: polylend-api
