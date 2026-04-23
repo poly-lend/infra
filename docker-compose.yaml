@@ -161,6 +161,18 @@ services:
     volumes:
       - web_dist:/web
 
+  web-testnet-build:
+    image: polylend-web-testnet-build
+    build:
+      context: ../webapp
+      dockerfile: Dockerfile
+      args:
+        - VITE_NETWORK=testnet
+        - VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=${VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
+        - VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST}
+    volumes:
+      - web_testnet_dist:/web
+
   landing-build:
     image: polylend-landing-build
     build:
@@ -177,6 +189,8 @@ services:
     container_name: polylend-caddy
     depends_on:
       web-build:
+        condition: service_completed_successfully
+      web-testnet-build:
         condition: service_completed_successfully
       landing-build:
         condition: service_completed_successfully
