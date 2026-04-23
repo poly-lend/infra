@@ -55,6 +55,35 @@ services:
     stop_grace_period: 30s
     restart: unless-stopped
 
+  # One-shot service that deploys PolyLend against the anvil fork and publishes
+  # the resulting deployment metadata to the testnet_deployments named volume.
+  # listener-testnet and api-testnet mount that volume read-only and resolve
+  # POLYLEND_ADDRESS / START_BLOCK from the JSON at startup.
+  testnet-deploy:
+    image: ghcr.io/foundry-rs/foundry:stable
+    container_name: polylend-testnet-deploy
+    depends_on:
+      anvil:
+        condition: service_healthy
+    user: "1001:1001"
+    environment:
+      - FOUNDRY_DISABLE_NIGHTLY_WARNING=1
+      - HOME=/tmp
+    volumes:
+      - ../contracts:/work
+      - ./data/testnet-deployments:/deployments
+    working_dir: /work
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        mkdir -p deployments
+        forge script script/DeployTestnet.s.sol --rpc-url http://anvil:8545 --broadcast
+        cp deployments/testnet.json /deployments/testnet.json
+        echo "=== wrote /deployments/testnet.json ==="
+        cat /deployments/testnet.json
+    restart: "no"
+
   api:
     image: polylend-api
     container_name: polylend-api
@@ -84,6 +113,8 @@ services:
         condition: service_healthy
       anvil:
         condition: service_healthy
+      testnet-deploy:
+        condition: service_completed_successfully
     environment:
       - NODE_ENV=production
       - NETWORK=testnet
@@ -91,8 +122,14 @@ services:
       - MONGO_DB=polylend-testnet
       - RPC_URL=http://anvil:8545
       - WS_URL=ws://anvil:8545
-      - POLYLEND_ADDRESS=${TESTNET_POLYLEND_ADDRESS}
-    command: ['node', 'build/api.js']
+    volumes:
+      - ./data/testnet-deployments:/deployments:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export POLYLEND_ADDRESS=$$(node -e "console.log(require('/deployments/testnet.json').polylend)")
+        echo "Resolved POLYLEND_ADDRESS=$$POLYLEND_ADDRESS"
+        exec node build/api.js
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
       interval: 30s
@@ -132,6 +169,8 @@ services:
         condition: service_healthy
       anvil:
         condition: service_healthy
+      testnet-deploy:
+        condition: service_completed_successfully
     environment:
       - NODE_ENV=production
       - NETWORK=testnet
@@ -139,9 +178,15 @@ services:
       - MONGO_DB=polylend-testnet
       - RPC_URL=http://anvil:8545
       - WS_URL=ws://anvil:8545
-      - POLYLEND_ADDRESS=${TESTNET_POLYLEND_ADDRESS}
-      - START_BLOCK=${TESTNET_START_BLOCK}
-    command: ['node', 'build/listener.js']
+    volumes:
+      - ./data/testnet-deployments:/deployments:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export POLYLEND_ADDRESS=$$(node -e "console.log(require('/deployments/testnet.json').polylend)")
+        export START_BLOCK=$$(node -e "console.log(require('/deployments/testnet.json').deployedAtBlock)")
+        echo "Resolved POLYLEND_ADDRESS=$$POLYLEND_ADDRESS START_BLOCK=$$START_BLOCK"
+        exec node build/listener.js
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
       interval: 30s
