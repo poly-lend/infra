@@ -35,32 +35,24 @@ services:
     restart: unless-stopped
 
   anvil:
-    image: ghcr.io/foundry-rs/foundry:latest
+    image: ghcr.io/foundry-rs/foundry:stable
     container_name: polylend-anvil
-    entrypoint: anvil
-    command:
-      - --fork-url
-      - ${RPC_URL}
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8545"
-      - --chain-id
-      - "31337"
-      - --block-time
-      - "2"
-      - --state
-      - /data/anvil-state.json
-      - --state-interval
-      - "600"
+    environment:
+      - RPC_URL=${RPC_URL}
+      - STATE_FILE=/data/anvil-state.json
+      - DUMP_INTERVAL_SECS=600
+      - FOUNDRY_DISABLE_NIGHTLY_WARNING=1
+    entrypoint: ["/bin/sh", "/anvil-entrypoint.sh"]
     volumes:
       - ./data/anvil:/data
+      - ./scripts/anvil-entrypoint.sh:/anvil-entrypoint.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "cast chain-id --rpc-url http://localhost:8545 | grep -q 31337"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
+    stop_grace_period: 30s
     restart: unless-stopped
 
   api:
