@@ -2,6 +2,8 @@ services:
   mongo:
     image: mongo:8
     container_name: polylend-mongo
+    ports:
+      - '127.0.0.1:27017:27017'
     volumes:
       - ./data/mongo:/data/db
     healthcheck:
@@ -10,28 +12,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    restart: unless-stopped
-
-  mongo-backup:
-    image: mongo:8
-    container_name: polylend-mongo-backup
-    depends_on:
-      mongo:
-        condition: service_healthy
-    volumes:
-      - ./data/backups:/backups
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        while true; do
-          STAMP=$$(date +%Y-%m-%d_%H%M)
-          echo "Starting backup $$STAMP"
-          mongodump --host mongo --archive=/backups/$$STAMP.gz --gzip \
-            && echo "Backup complete: $$STAMP" \
-            || echo "Backup failed: $$STAMP"
-          find /backups -name '*.gz' -mtime +14 -delete
-          sleep 86400
-        done
     restart: unless-stopped
 
   anvil:
